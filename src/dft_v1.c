@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <assert.h>
 #include <math.h>
+#include <time.h>
 
 #define PI 3.14159265358979323846
 
@@ -186,7 +187,6 @@ CMatrix FFT(CMatrix R, int N) {
     return result;
 }
 
-
 /// @brief recursive version for fft
 /// @param N target N
 /// @return matrix R in shape (N, N)
@@ -265,17 +265,27 @@ void test_get_R() {
 }
 
 void test_fft() {
-    int N = 16;
+    int N = 4096*4;
     CMatrix input = new_cmatrix(N, 1);
     for (int i = 0; i < N; i++) {
         input.data[i][0].real = i%2 ? i+1: -i+1;
         input.data[i][0].imag = -1;
     }
-    printf("input:\n");
-    print_cmatrix(input);
+
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     CMatrix output = run_fft(input, N);
-    printf("FFT Output:\n");
-    print_cmatrix(output);
+    end = clock();
+    clock_t ticks = end - start;
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("total ticks:%zu", ticks);
+    printf("total cpu time:%.10f", cpu_time_used);
+
+    // printf("input:\n");
+    // print_cmatrix(input);
+    // printf("FFT Output:\n");
+    // print_cmatrix(output);
 }
 
 // ####### Failed ###########

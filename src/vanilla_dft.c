@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 
 #define PI 3.14159265358979323846
 
@@ -30,24 +31,32 @@ void printComplexArray(Complex* arr, int N) {
     }
 }
 
-int main() {
-    int N = 8; // Number of points in the DFT
-    Complex input[N]; // Input array
-    Complex output[N]; // Output array
-
-    // Initialize the input array with some values (example values)
+void run_dft() {
+    int N = 4096*4; // Number of points in the DFT
+    Complex input[N];
+    Complex output[N];
     for (int i = 0; i < N; i++) {
-        input[i].real = i + 1;
-        input[i].imag = 0;
+        input[i].real = i%2 ? i+1: -i+1;
+        input[i].imag = -1;
     }
 
-    // Compute the DFT
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
     DFT(input, output, N);
+    end = clock();
+    clock_t ticks = end - start;
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("total ticks:%zu\n", ticks);
+    printf("total cpu time:%.10f", cpu_time_used);
 
     // Print the output
-    printf("DFT Output:\n");
-    printComplexArray(output, N);
+    // printf("DFT Output:\n");
+    // printComplexArray(output, N);
+}
 
+int main() {
+    run_dft();
     return 0;
 }
 

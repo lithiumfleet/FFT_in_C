@@ -1,9 +1,18 @@
-vanilla_dft: src/vanilla_dft.c
-	gcc -Og src/vanilla_dft.c -o bin/vanilla_dft.exe -Wall
+# Define the compiler
+CC = gcc
 
-fft_v1: src/fft_v1.c
-	gcc -Og src/fft_v1.c -o bin/fft_v1.exe -Wall
+# Define compiler flags
+CFLAGS = -Wall -g
 
-test: src/test.c
-	gcc -Og src/test.c -o bin/test.exe -Wall
-	bin/test.exe
+.PHONY: run
+run:
+	@echo "start compile"
+%.exe : %.c
+	fn=$(basename $(notdir $@))
+	$(CC) $(CFLAGS) ./src/$(basename $(notdir $@)).c -o ./bin/$(basename $(notdir $@)).exe
+	./bin/$(basename $(notdir $@)).exe
+
+# Rule to clean the generated files
+.PHONY: clean
+clean:
+	rm -f ./bin/*.exe
