@@ -35,7 +35,7 @@ void print_complex(Complex a) {
 }
 
 void print_cmatrix(CMatrix m) {
-    if (!m.n_rows > 4 && m.n_cols > 4) {
+    if (m.n_rows > 4 && m.n_cols > 4) {
     printf(\
 "%.1f+%.1fj %.1f+%.1fj ... %.1f+%.1fj\n\
 %.1f+%.1fj %.1f+%.1fj ... %.1f+%.1fj\n\
@@ -151,7 +151,11 @@ Complex _get_W_matrix_element(int i, int N) {
 }
 
 size_t _get_permutated_index(size_t j, int N) {
-    return j%2==0 ? j/2 : (j-1)/2+N/2;
+    // permutate the index
+    // e.g: 01234567 --> 02461357
+    assert(j<N);
+    return j<N/2 ? j*2 : j%(N/2)*2+1;
+
 }
 
 /// @brief return matrix R in shape (N, N)
@@ -166,11 +170,11 @@ CMatrix FFT(CMatrix R, int N) {
 
     for (int i=0; i < N; i ++) { // scan the lines
         // one line only contains two elements to calculate
-        Complex identity_matrix_element = _get_identity_matrix_element();
-        Complex W_matrix_element = _get_W_matrix_element(i, N);
+        Complex identity_matrix_element = _get_identity_matrix_element(); // IDR[i,i%(N/2)]
+        Complex W_matrix_element = _get_W_matrix_element(i, N); // IDR[i,i%(N/2)+N/2]
 
         for (size_t j=0; j < N; j ++) {
-            // permutation: 0,1,2,3,4,5,6,7 --> 0,2,4,6,1,3,5,7
+            // permutation: 0,4,1,5,2,6,3,7
             size_t permutation_j = _get_permutated_index(j, N);
             if ((i < N/2 && j < N/2) || (i >= N/2 && j < N/2)) {
                 result.data[i][permutation_j] = multiply(identity_matrix_element, R.data[i%(N/2)][j%(N/2)]);
@@ -249,24 +253,23 @@ void test_matmul() {
 
 void test_permutation() {
     int a[] = {0,1,2,3,4,5,6,7};
-    for (size_t i=0; i < 8; i ++) {
-        printf("%d -> %zu\n", a[i], _get_permutated_index(i, 8));
+    int len = sizeof(a)/sizeof(int);
+    for (size_t i=0; i < len; i ++) {
+        printf("%d -> %zu\n", a[i], _get_permutated_index(i, len));
     }
 }
 
-// ####### Failed ###########
-
 void test_get_R() {
     CMatrix R = get_R(8);
-    print_cmatrix(R); // ATTENTION: print_cm is changed for debug, after it please remove the ! in if expr!!!!!!!!!!
+    print_cmatrix(R);
 }
 
 void test_fft() {
-    int N = 8; // Number of points in the DFT
+    int N = 16;
     CMatrix input = new_cmatrix(N, 1);
     for (int i = 0; i < N; i++) {
-        input.data[i][0].real = i + 1;
-        input.data[i][0].imag = 0;
+        input.data[i][0].real = i%2 ? i+1: -i+1;
+        input.data[i][0].imag = -1;
     }
     printf("input:\n");
     print_cmatrix(input);
@@ -275,7 +278,9 @@ void test_fft() {
     print_cmatrix(output);
 }
 
+// ####### Failed ###########
+
 int main() {
-    test_get_R();
+    test_fft();
     return 0;
 }
