@@ -2,7 +2,7 @@
 CC = gcc
 
 # Define compiler flags
-CFLAGS = -Wall -g
+CFLAGS = -Wall -g -O
 
 .PHONY: run
 run:

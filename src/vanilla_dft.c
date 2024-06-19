@@ -36,19 +36,11 @@ void run_dft() {
     Complex input[N];
     Complex output[N];
     for (int i = 0; i < N; i++) {
-        input[i].real = i%2 ? i+1: -i+1;
-        input[i].imag = -1;
+        input[i].real = i;
+        input[i].imag = 0;
     }
 
-    clock_t start, end;
-    double cpu_time_used;
-    start = clock();
     DFT(input, output, N);
-    end = clock();
-    clock_t ticks = end - start;
-    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
-    printf("total ticks:%zu\n", ticks);
-    printf("total cpu time:%.10f", cpu_time_used);
 
     // Print the output
     // printf("DFT Output:\n");
@@ -56,7 +48,17 @@ void run_dft() {
 }
 
 int main() {
+    clock_t start, end;
+    double cpu_time_used;
+    start = clock();
+
     run_dft();
+
+    end = clock();
+    clock_t ticks = end - start;
+    cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
+    printf("total ticks:%zu\n", ticks);
+    printf("total cpu time:%.10f", cpu_time_used);
     return 0;
 }
 
