@@ -3,10 +3,13 @@
 #include <math.h>
 #include <time.h>
 #include <assert.h>
+#include <windows.h>
+#include <stdlib.h>
+
 
 #define PI 3.14159265358979323846
 
-// structure to hold complex numbers
+
 typedef struct {
     double real;
     double imag;
@@ -96,25 +99,85 @@ void merge(Complex* input, Complex* output, int num_blocks, int block_size, int 
     }
 }
 
-// parallel dft: split original signal to from N to max_concurrency * N/max_concurrency, aka N = block_size * num_blocks
+typedef struct {
+    Complex* middel;
+    Complex* input;
+    int block_size;
+    int offset;
+    int id;
+} ThreadData;
+
+DWORD WINAPI dft_thread(LPVOID arg) {
+    ThreadData* data = (ThreadData*)arg;
+    printf("start thread%d\n", data->id);
+    DFT(data->middel+data->offset, data->input+data->offset, data->block_size);
+    printf("finish thread%d\n", data->id);
+    return 0;
+}
+
+// parallel version for sequencial_dft, open the loop
 void parallel_dft(Complex* input, Complex* middel, Complex* output, int N, int max_concurrency) {
     // check args
     assert(N % max_concurrency == 0);
 
     int block_size = N/max_concurrency;
-    int num_bocks = max_concurrency;
+    int num_blocks = max_concurrency;
 
     // perumerate all index to correct position
-    _mod_N_perumerate(input, middel, block_size, num_bocks);
+    _mod_N_perumerate(input, middel, block_size, num_blocks);
+
+    // Create an array to hold thread handles
+    HANDLE* threads = malloc(num_blocks * sizeof(HANDLE));
+    ThreadData* thread_data = malloc(num_blocks * sizeof(ThreadData));
 
     // concurrently run blocks
-    for (int block_idx=0; block_idx < num_bocks; block_idx ++) {
+    for (int block_idx = 0; block_idx < num_blocks; block_idx++) {
+        thread_data[block_idx].id = block_idx;
+        thread_data[block_idx].middel = middel;
+        thread_data[block_idx].input = input;
+        thread_data[block_idx].block_size = block_size;
+        thread_data[block_idx].offset = block_idx * block_size;
+        threads[block_idx] = CreateThread(NULL, 0, dft_thread, &thread_data[block_idx], 0, NULL);
+    }
+
+    // wait for all threads to finish
+    WaitForMultipleObjects(num_blocks, threads, TRUE, INFINITE);
+    printf("[info] all threads finish.\n");
+
+    // close thread handles
+    for (int block_idx = 0; block_idx < num_blocks; block_idx++) {
+        CloseHandle(threads[block_idx]);
+    }
+
+    // clean up
+    free(threads);
+    free(thread_data);    
+
+    printf("[info] all threads end. start merge.\n");
+    // merge the last level
+    merge(input, output, num_blocks, block_size, N);
+    printf("[info] finish DFT\n");
+}
+
+// split original signal to from N to max_concurrency * N/max_concurrency, aka N = block_size * num_blocks
+void sequencial_dft(Complex* input, Complex* middel, Complex* output, int N, int max_concurrency) {
+    // check args
+    assert(N % max_concurrency == 0);
+
+    int block_size = N/max_concurrency;
+    int num_blocks = max_concurrency;
+
+    // perumerate all index to correct position
+    _mod_N_perumerate(input, middel, block_size, num_blocks);
+
+    // concurrently run blocks
+    for (int block_idx=0; block_idx < num_blocks; block_idx ++) {
         int offset = block_idx*block_size;
         DFT(middel+offset, input+offset, block_size);
     }
 
     // merge the last level
-    merge(input, output, num_bocks, block_size, N);
+    merge(input, output, num_blocks, block_size, N);
 }
 
 
@@ -190,13 +253,13 @@ int test_split_chunck_no_cross() {
     return 0;
 }
 
-int run_dft() {
+int test_sequencial_dft() {
 // int main() {
-    int N = 18;
-    int max_concurrency = 3;
-    Complex input[N];
-    Complex middel[N];
-    Complex output[N];
+    int N = 100;
+    int max_concurrency = 25;
+    Complex* input = (Complex*)malloc(sizeof(Complex)*N);
+    Complex* middel = (Complex*)malloc(sizeof(Complex)*N);
+    Complex* output = (Complex*)malloc(sizeof(Complex)*N);
     for (int i = 0; i < N; i++) {
         input[i].real = i;
         input[i].imag = 0;
@@ -205,7 +268,7 @@ int run_dft() {
     printf("Input:\n");
     print_complex_array(input, N);
 
-    parallel_dft(input, middel, output, N, max_concurrency);
+    sequencial_dft(input, middel, output, N, max_concurrency);
 
     printf("perumerate input(Middel):\n");
     print_complex_array(middel, N);
@@ -213,5 +276,24 @@ int run_dft() {
     print_complex_array(input, N);
     printf("DFT Output(output):\n");
     print_complex_array(output, N);
+    return 0;
+}
+
+// int test_parallel_dft() {
+int main() {
+    int N = 4096*8;
+    int max_concurrency = 8;
+    Complex* input = (Complex*)malloc(sizeof(Complex)*N);
+    Complex* middel = (Complex*)malloc(sizeof(Complex)*N);
+    Complex* output = (Complex*)malloc(sizeof(Complex)*N);
+    for (int i = 0; i < N; i++) {
+        input[i].real = i;
+        input[i].imag = 0;
+    }
+
+    parallel_dft(input, middel, output, N, max_concurrency);
+
+    // printf("DFT Output(output):\n");
+    // print_complex_array(output, N);
     return 0;
 }
