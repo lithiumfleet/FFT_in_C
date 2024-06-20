@@ -32,7 +32,7 @@ void printComplexArray(Complex* arr, int N) {
 }
 
 void run_dft() {
-    int N = 4096*4; // Number of points in the DFT
+    int N = 7; // Number of points in the DFT
     Complex input[N];
     Complex output[N];
     for (int i = 0; i < N; i++) {
@@ -40,11 +40,14 @@ void run_dft() {
         input[i].imag = 0;
     }
 
+    printf("Input:\n");
+    printComplexArray(input, N);
+
     DFT(input, output, N);
 
     // Print the output
-    // printf("DFT Output:\n");
-    // printComplexArray(output, N);
+    printf("DFT Output:\n");
+    printComplexArray(output, N);
 }
 
 int main() {

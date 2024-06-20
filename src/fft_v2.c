@@ -116,7 +116,7 @@ int test_peruerate_index() {
     return 0;
 }
 int test_rotate_factors() {
-    int level = 3; // level = 2+1
+    int level = 3; // level = 3+1
     int N = 16;
     int num_factors = 1<<level;
     Complex W[num_factors];
@@ -152,7 +152,7 @@ int test_get_node_ab_index() {
     return 0;
 }
 void test_fft() {
-    const int test_N = 65536*64;
+    const int test_N = 4096*1024;
     Complex* test_input = (Complex*)malloc(sizeof(Complex)*test_N); // so... a stack can't hold this...
     for (int i = 0; i < test_N; i++) {
         test_input[i].real = i;
@@ -170,6 +170,32 @@ void test_fft() {
 }
 
 //##### Fail #####//
+
+
+//##### main #####//
+// fft usage:
+// 1. create a signal sequence. all elements should be Complex
+// 2. define the number of points in FFT
+// 3. use  print_complex_array to print input and output.
+/* int main() {
+
+    const int N = 64;
+    Complex* input = (Complex*)malloc(sizeof(Complex)*N);
+    for (int i = 0; i < test_N; i++) {
+        test_input[i].real = i;
+        test_input[i].imag = -i;
+    }
+    printf("Input:\n");
+    print_complex_array(input, N);
+
+    fft(input, N);
+
+    printf("\nOutput:\n");
+    print_complex_array(input, N);
+    free(input);
+    return 0;
+}
+*/
 
 int main() {
 
